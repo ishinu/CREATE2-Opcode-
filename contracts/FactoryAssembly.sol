@@ -6,11 +6,12 @@ import "./Logic.sol";
 
 contract FactoryAssembly{
     address payable public deploymentAddress;
+    event Deploy(address addr);
     event Deployed(address addr, uint salt);
 
-    function getByteCode() public pure returns(bytes memory){
-        bytes memory bytecode = type(Logic).creationCode;
-        return abi.encodePacked(bytecode);
+    function getByteCode(address _owner) public pure returns(bytes memory){
+        bytes memory bytecode = type(Logic).creationCode;   
+        return abi.encodePacked(bytecode,abi.encode(_owner));
     }
 
     function getAddress(bytes memory bytecode, uint _salt) public{
@@ -37,5 +38,10 @@ contract FactoryAssembly{
             }
         }
         emit Deployed(addr,_salt);
+    }
+
+    function deploy(uint _salt) external {
+        Logic _contract = new Logic{ salt : bytes32(_salt) }(msg.sender);
+        emit Deploy(address(_contract));
     }
 }
