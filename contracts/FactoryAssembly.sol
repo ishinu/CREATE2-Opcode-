@@ -6,17 +6,17 @@ import "./Logic.sol";
 
 contract FactoryAssembly{
     address payable public deploymentAddress;
-    event Deploy(address addr);
-    event Deployed(address addr, uint salt);
+    event Deploy(address _addr);
+    event Deployed(address _addr, uint salt);
 
-    function getByteCode(address _owner) public pure returns(bytes memory){
+    function getByteCode() public pure returns(bytes memory){
         bytes memory bytecode = type(Logic).creationCode;   
-        return abi.encodePacked(bytecode,abi.encode(_owner));
+        return abi.encodePacked(bytecode);
     }
 
     function getAddress(bytes memory bytecode, uint _salt) public{
-        bytes32 hash = keccak256(abi.encodePacked(bytes1(0xff),address(this),_salt,keccak256(bytecode)));
-        deploymentAddress =  payable(address(uint160(uint(hash))));
+        bytes32 deploymentAddressHash = keccak256(abi.encodePacked(bytes1(0xff),address(this),_salt,keccak256(bytecode)));
+        deploymentAddress =  payable(address(uint160(uint(deploymentAddressHash))));
     }
 
     function preSendEth() public payable{
@@ -24,11 +24,11 @@ contract FactoryAssembly{
         require(success,"Failed to send Ether.");
     }
 
-    function deployContract(bytes memory bytecode, uint _salt) public payable{
+    function deployContract(bytes memory bytecode, uint _salt) public{
         address addr;
         assembly {
             addr := create2(
-                callvalue(),
+                0,
                 add(bytecode,0x20),
                 mload(bytecode),
                 _salt
@@ -41,7 +41,7 @@ contract FactoryAssembly{
     }
 
     function deploy(uint _salt) external {
-        Logic _contract = new Logic{ salt : bytes32(_salt) }(msg.sender);
+        Logic _contract = new Logic{ salt : bytes32(_salt) }();
         emit Deploy(address(_contract));
     }
 }

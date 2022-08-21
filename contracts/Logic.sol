@@ -1,10 +1,12 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.9;
 
-contract Logic{
+import "@openzeppelin/contracts/proxy/utils/Initializable.sol";
+
+contract Logic is Initializable{
     address payable public owner;
 
-    constructor(address _owner){
+    function initialize(address _owner) public initializer{
         owner = payable(_owner);
     }
 
@@ -13,4 +15,8 @@ contract Logic{
         owner.transfer(address(this).balance);
     }
 
+    function kill() public {
+        require(payable(msg.sender)==owner);
+        selfdestruct(owner);
+    }
 }
